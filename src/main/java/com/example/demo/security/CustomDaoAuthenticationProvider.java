@@ -1,9 +1,10 @@
 package com.example.demo.security;
 
+import java.security.Principal;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -34,8 +35,7 @@ public class CustomDaoAuthenticationProvider extends DaoAuthenticationProvider {
 			throw new BadCredentialsException("인증실패");
 		}
 		
-		//Authentication 인자를 그대로 리턴하면 인증 실패함, 아래처럼 UsernamePasswordAuthenticationToken 객체를 리턴해야함
-		return new UsernamePasswordAuthenticationToken(user, user.getPassword(), authentication.getAuthorities());
+		return createSuccessAuthentication(authentication.getPrincipal(), authentication, user);
 	}
 	
 }

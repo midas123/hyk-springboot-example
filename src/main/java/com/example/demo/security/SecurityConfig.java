@@ -12,12 +12,13 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-
 @Configuration
-@EnableWebSecurity
+//@EnableWebSecurity
+@EnableWebSecurity(debug = true)
 @EnableGlobalMethodSecurity(prePostEnabled=true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
@@ -38,6 +39,16 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	public PasswordEncoder encoder() {
 		return new BCryptPasswordEncoder();
 	}
+
+//	@Bean
+//	public CustomAuthenticationProvider authProvider() {
+//		return new CustomAuthenticationProvider();
+//	}
+//
+//	@Autowired
+//	protected void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
+//		auth.authenticationProvider(authProvider());
+//	}
 	
 	@Bean
 	public DaoAuthenticationProvider customDaoAuthenticationProvider() {
@@ -56,19 +67,23 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	@Override
 	protected void configure(final HttpSecurity http) throws Exception {
 		http.csrf().disable()
-				.authorizeRequests().antMatchers("/admin/**").hasRole("ADMIN")
+				.authorizeRequests()
+				.antMatchers("/admin/**").hasRole("ADMIN")
 				.antMatchers("/anonymous*").anonymous().antMatchers("/user/**").permitAll()
 				.antMatchers("/login*").permitAll().anyRequest()
 				.authenticated().and().formLogin().loginPage("/login").loginProcessingUrl("/loginprocess")
 				.defaultSuccessUrl("/main", true)
 				.failureUrl("/login?error=true")
-				.and().exceptionHandling().accessDeniedPage("/error/403.html")
+				//.and().exceptionHandling().accessDeniedPage("/error/403")
 				.and()
 				//.addFilterBefore(new CustomFilter(), BasicAuthenticationFilter.class)
 				//.authenticationProvider(customDaoAuthenticationProvider()) //여러 개의 커스텀 authenticationProvider 추가시 
 				// .failureHandler(authenticationFailureHandler())
 				.logout().logoutUrl("/logout").deleteCookies("JSESSIONID");
-		
-		// .logoutSuccessHandler(logoutSuccessHandler());
+		http
+		.sessionManagement()
+		//.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+		.sessionFixation().changeSessionId();
 	}
+
 }
