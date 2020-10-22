@@ -1,5 +1,7 @@
-package com.example.demo.security;
+package com.example.demo.config;
 
+
+import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -15,6 +17,15 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenBasedRememberMeServices;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
+import org.springframework.security.web.authentication.rememberme.RememberMeAuthenticationFilter;
+
+import com.example.demo.filter.CustomFilter;
+import com.example.demo.security.CustomDaoAuthenticationProvider;
+import com.example.demo.security.SessionListener;
+import com.example.demo.security.UserSecurityService;
 
 @Configuration
 //@EnableWebSecurity
@@ -26,6 +37,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	@Autowired
 	@Qualifier("userSecurityService")
 	private UserSecurityService userDetailsService;
+	
+	@Autowired
+	private DataSource reMemberMeDataSource;
 	
 	@Bean
 	public ServletListenerRegistrationBean<SessionListener> sessionListenerWithMetrics() {
@@ -58,6 +72,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		return provider;
 	}
 	
+	@Bean
+	public PersistentTokenRepository jdbcTokenRepository() {
+		JdbcTokenRepositoryImpl jtri = new JdbcTokenRepositoryImpl();
+		jtri.setCreateTableOnStartup(false);
+		jtri.setDataSource(reMemberMeDataSource);
+		return jtri;
+	}
+	 
 	@Override
 	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
 		auth.userDetailsService(userDetailsService);
@@ -76,7 +98,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 				.failureUrl("/login?error=true")
 				//.and().exceptionHandling().accessDeniedPage("/error/403")
 				.and()
-				//.addFilterBefore(new CustomFilter(), BasicAuthenticationFilter.class)
+			    .rememberMe()
+                .key("rem-me-key")
+                .rememberMeCookieName("remember-me-cookie")
+                .rememberMeParameter("remember-me")  
+                .tokenRepository(jdbcTokenRepository())
+                .tokenValiditySeconds(1*24*60*60)
+				.and()
+				//.addFilterBefore(new CustomFilter(), RememberMeAuthenticationFilter.class)
 				//.authenticationProvider(customDaoAuthenticationProvider()) //여러 개의 커스텀 authenticationProvider 추가시 
 				// .failureHandler(authenticationFailureHandler())
 				.logout().logoutUrl("/logout").deleteCookies("JSESSIONID");
