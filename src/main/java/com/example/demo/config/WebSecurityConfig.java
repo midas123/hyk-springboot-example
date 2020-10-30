@@ -31,7 +31,7 @@ import com.example.demo.security.UserSecurityService;
 //@EnableWebSecurity
 @EnableWebSecurity(debug = true)
 @EnableGlobalMethodSecurity(prePostEnabled=true)
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
+public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 
 	@Autowired
@@ -91,7 +91,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		http.csrf().disable()
 				.authorizeRequests()
 				.antMatchers("/admin/**").hasRole("ADMIN")
-				.antMatchers("/anonymous*").anonymous().antMatchers("/user/**").permitAll()
+				.antMatchers("/anonymous*").anonymous().antMatchers("/download").permitAll()
+				.antMatchers("/user/**").permitAll()
+				.antMatchers("/download*").permitAll()
 				.antMatchers("/login*").permitAll().anyRequest()
 				.authenticated().and().formLogin().loginPage("/login").loginProcessingUrl("/loginprocess")
 				.defaultSuccessUrl("/main", true)
