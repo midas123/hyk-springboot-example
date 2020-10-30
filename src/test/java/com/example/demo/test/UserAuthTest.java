@@ -2,16 +2,10 @@ package com.example.demo.test;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
-import javax.persistence.EntityTransaction;
 
-import org.hibernate.Transaction;
 import org.junit.Test;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
@@ -26,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.demo.entity.Address;
 import com.example.demo.entity.AuthorityName;
 import com.example.demo.entity.OrderBasket;
+import com.example.demo.entity.User;
 import com.example.demo.entity.UserAuth;
 import com.example.demo.entity.UserInfo;
 import com.example.demo.service.UserService;
@@ -43,7 +38,34 @@ public class UserAuthTest {
 	@Test
 	@Transactional
 	@Rollback(false)
-	@Order(3)
+	@Order(4)
+	public void userAndAuthEntityTest() {
+		EntityManager em = emf.createEntityManager();
+
+		UserInfo user = UserInfo.builder()
+		.userName("test")
+		.password("1234")
+		.build();
+		
+		UserAuth auth = new UserAuth(AuthorityName.ROLE_USER);
+		
+		em.getTransaction().begin();
+		em.persist(auth);
+		em.persist(user);
+		long userId = user.getId();
+		UserInfo resultUserNull = userService.getUser("test");
+		em.getTransaction().commit();
+		
+		UserInfo resultUser = em.find(UserInfo.class, userId);
+		
+		assertEquals("엔티티 트랙잭션 커밋전 사용자 조회 결과 Null 테스트", true, resultUserNull == null);
+		assertEquals("사용자 조회 테스트", true, user.getUserName().equals(resultUser.getUserName()));
+	}
+	
+	@Test
+	@Transactional
+	@Rollback(false)
+	@Order(0)
 	public void userEntityTest() {
 		EntityManager em = emf.createEntityManager();
 
@@ -65,7 +87,6 @@ public class UserAuthTest {
 		long userId = user.getId();
 		UserInfo resultUserNull = userService.getUser("test");
 		em.getTransaction().commit();
-		
 		UserInfo resultUser = em.find(UserInfo.class, userId);
 		
 		assertEquals("엔티티 트랙잭션 커밋전 사용자 조회 결과 Null 테스트", true, resultUserNull == null);

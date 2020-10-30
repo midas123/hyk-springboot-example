@@ -29,8 +29,8 @@ import lombok.Setter;
 @Getter @Setter
 @NoArgsConstructor
 @Entity
-@Table(name="user_info")
-public class UserInfo {
+@Table(name="users")
+public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
@@ -43,18 +43,18 @@ public class UserInfo {
 	@JoinColumn(name="user_id")
 	private List<Address> addresses = new ArrayList<Address>();
 	
+	
 	@OneToMany(fetch = FetchType.EAGER)
 	@Cascade(CascadeType.DELETE)
 	@JoinColumn(name="user_id")
 	private List<OrderBasket> orders = new ArrayList<>();
 	
-	@ManyToMany(targetEntity = UserAuth.class, fetch = FetchType.EAGER)
-	@Cascade(CascadeType.SAVE_UPDATE)
-	@JoinTable(name="user_auth_map", joinColumns={ @JoinColumn(name="user_id") }, inverseJoinColumns={ @JoinColumn(name="auth_id") })		
-	private java.util.Set<UserAuth> auths = new HashSet<>();
+	@OneToMany(mappedBy = "user", targetEntity = UserAuthMap.class, fetch = FetchType.EAGER)
+	@org.hibernate.annotations.Cascade({org.hibernate.annotations.CascadeType.SAVE_UPDATE})
+	private Set<UserAuthMap> userAuthMaps = new HashSet<>();
 
 	@Builder
-	public UserInfo(String userName, String password) {
+	public User(String userName, String password) {
 		this.userName = userName;
 		this.password = password;
 	}
@@ -63,16 +63,16 @@ public class UserInfo {
 		this.addresses.add(address);
 	}
 	
-	public void addAuth(UserAuth auth) {
-		this.auths.add(auth);
+	public void addAuthMapping(UserAuthMap authMap) {
+		this.userAuthMaps.add(authMap);
 	}
 	
 	public void addOrder(OrderBasket order) {
 		this.orders.add(order);
 	}
 	
-	public static UserInfo dtoToEntity(UserDto dto) {
-		return UserInfo.builder()
+	public static User dtoToEntity(UserDto dto) {
+		return User.builder()
 				.userName(dto.getUsername())
 				.password(dto.getPassword())
 				.build();
